@@ -1,0 +1,7 @@
+NODE_ENV_PRODUCTION = 'production';
+NODE_ENV_DEVELOPMENT = 'dev';
+
+module.exports = {
+    NODE_ENV_PRODUCTION,
+    NODE_ENV_DEVELOPMENT,
+};
