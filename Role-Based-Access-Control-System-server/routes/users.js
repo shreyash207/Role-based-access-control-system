@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
@@ -69,6 +70,39 @@ router.get(
       res.status(200).json(users);
     } catch (err) {
       res.status(500).send("Server Error");
+    }
+  }
+);
+
+
+// Create a new user
+router.post('/', async (req, res) => {
+    const { name, email, password, role } = req.body;
+    try {
+      if (!name || !email || !password || !role) {
+        return res.status(400).json({ msg: 'Please include name, email, password and role' });
+      }
+
+      // ensure role is valid
+      if (!Object.values(Role).includes(role)) {
+        return res.status(400).json({ msg: 'Invalid role' });
+      }
+      // check for existing user
+      let existing = await User.findOne({ email });
+      if (existing) {
+        return res.status(409).json({ msg: 'Email already registered' });
+      }
+      
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(password, salt);
+      const user = new User({ name, email, password: hash, role });
+      await user.save();
+
+      const { password: pw, ...userData } = user.toObject();
+      res.status(201).json({ msg: 'User created', user: userData });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
     }
   }
 );
